@@ -2,6 +2,9 @@
 CLAUDE.md
 .claude/
 
+# Secrets (deployment keys, tokens — never commit)
+.secrets/
+
 # OS
 .DS_Store
 Thumbs.db

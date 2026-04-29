@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黒板 — Old Clock Calendar</title>
+<meta name="description" content="ひと言だけ書ける、ゆっくりした黒板。書いたものは翌朝に出ます。">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://sakuradevjp.github.io/old-clock-calendar-notes/blackboard/">
+<link rel="icon" type="image/png" href="../assets/icon.png">
+<link rel="shortcut icon" href="../assets/favicon.ico">
+<style>
+:root{
+  --board:#1f4e4a;
+  --board-dark:#163a37;
+  --chalk:#f5f1e8;
+  --chalk-soft:#cbc6b8;
+  --chalk-faint:#8a9290;
+  --chalk-red:#ff7878;
+  --tape:#e8d88f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Hiragino Mincho ProN","Yu Mincho","游明朝","ヒラギノ明朝 ProN W3",serif;
+  background:var(--board);
+  color:var(--chalk);
+  line-height:1.95;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(255,255,255,.04), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(255,255,255,.03), transparent 50%),
+    radial-gradient(circle at 20% 70%, rgba(255,255,255,.015) 0, transparent 30%),
+    radial-gradient(circle at 80% 30%, rgba(255,255,255,.02) 0, transparent 25%);
+}
+.wrap{max-width:680px;margin:0 auto;padding:3rem 1.25rem 5rem}
+.crumb{
+  text-align:left;font-size:.9rem;color:var(--chalk-soft);
+  margin-bottom:2rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.crumb a{color:var(--chalk-soft);text-decoration:none;border-bottom:1px dashed var(--chalk-soft)}
+.crumb a:hover{color:var(--chalk)}
+
+header.intro{text-align:center;padding:1rem 0 2rem}
+header.intro h1{
+  font-size:clamp(2rem,6vw,2.8rem);
+  margin:0 0 1.2rem;
+  letter-spacing:.2em;
+  color:var(--chalk);
+  font-weight:normal;
+}
+header.intro .lead{
+  font-size:1rem;
+  color:var(--chalk-soft);
+  margin:0;
+  line-height:2.1;
+  letter-spacing:.05em;
+}
+header.intro .lead em{
+  font-style:normal;
+  color:var(--chalk);
+  border-bottom:1px dotted var(--chalk-soft);
+  padding-bottom:1px;
+}
+
+.compose{
+  margin:2.5rem 0 3.5rem;
+  padding:1.75rem 1.5rem;
+  background:rgba(0,0,0,.18);
+  border:1px dashed var(--chalk-soft);
+  border-radius:4px;
+}
+.compose label{
+  display:block;
+  font-size:.9rem;
+  color:var(--chalk-soft);
+  margin-bottom:.6rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  letter-spacing:.05em;
+}
+.compose textarea{
+  width:100%;
+  min-height:4.5rem;
+  background:rgba(0,0,0,.25);
+  border:none;
+  border-bottom:1px dashed var(--chalk-soft);
+  color:var(--chalk);
+  font-family:inherit;
+  font-size:1.15rem;
+  line-height:1.8;
+  padding:.6rem .4rem;
+  resize:none;
+  outline:none;
+}
+.compose textarea::placeholder{color:var(--chalk-faint);font-style:italic}
+.compose textarea:focus{border-bottom-color:var(--chalk)}
+.compose .meta{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:.9rem;
+  font-size:.85rem;
+  color:var(--chalk-faint);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.compose .count{font-variant-numeric:tabular-nums}
+.compose .hint{
+  margin-top:.5rem;
+  font-size:.85rem;
+  color:var(--chalk-faint);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.compose .actions{
+  margin-top:1.4rem;
+  text-align:right;
+}
+.btn-place{
+  background:transparent;
+  color:var(--chalk);
+  border:1px solid var(--chalk-soft);
+  padding:.55rem 1.6rem;
+  font-family:inherit;
+  font-size:1rem;
+  letter-spacing:.15em;
+  border-radius:2px;
+  cursor:pointer;
+  transition:background .25s, border-color .25s;
+}
+.btn-place:hover{background:rgba(255,255,255,.05);border-color:var(--chalk)}
+.btn-place:disabled{opacity:.4;cursor:not-allowed}
+.compose .placed-msg{
+  display:none;
+  margin-top:1rem;
+  padding:.9rem;
+  text-align:center;
+  color:var(--chalk-soft);
+  font-size:.95rem;
+  border:1px dashed var(--chalk-soft);
+  border-radius:3px;
+  background:rgba(255,255,255,.03);
+}
+.compose.placed .placed-msg{display:block}
+.compose.placed textarea,.compose.placed .actions,.compose.placed .meta,.compose.placed .hint,.compose.placed label{display:none}
+
+.section-label{
+  text-align:center;
+  font-size:.85rem;
+  color:var(--chalk-soft);
+  letter-spacing:.3em;
+  margin:2rem 0 1.5rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.section-label::before,.section-label::after{
+  content:"──";
+  margin:0 .8rem;
+  color:var(--chalk-faint);
+}
+
+.posts{list-style:none;padding:0;margin:0}
+.post{
+  padding:1.5rem 1rem;
+  border-bottom:1px dashed rgba(203,198,184,.25);
+  position:relative;
+}
+.post:last-child{border-bottom:none}
+.post .body{
+  font-size:1.15rem;
+  line-height:1.85;
+  color:var(--chalk);
+  margin:0 0 .9rem;
+  letter-spacing:.04em;
+}
+.post .body::before{
+  content:"・";
+  color:var(--chalk-soft);
+  margin-right:.2rem;
+}
+.post .when{
+  font-size:.8rem;
+  color:var(--chalk-faint);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  letter-spacing:.05em;
+}
+.post .reactions{
+  display:flex;gap:1.2rem;align-items:center;
+  margin-top:.7rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  font-size:.85rem;
+}
+.react-nod{
+  background:none;border:none;cursor:pointer;
+  color:var(--chalk-soft);
+  font-family:inherit;font-size:.85rem;
+  padding:.3rem .5rem;border-radius:3px;
+  transition:color .2s, background .2s;
+  letter-spacing:.05em;
+}
+.react-nod:hover{color:var(--chalk);background:rgba(255,255,255,.04)}
+.react-nod[aria-pressed="true"]{color:var(--tape)}
+.react-nod .num{
+  margin-left:.4rem;
+  font-variant-numeric:tabular-nums;
+  color:var(--chalk-faint);
+}
+.react-nod[aria-pressed="true"] .num{color:var(--tape)}
+
+.react-bad{
+  background:none;border:none;cursor:pointer;
+  color:var(--chalk-faint);
+  font-family:inherit;font-size:.8rem;
+  padding:.3rem .5rem;border-radius:3px;
+  transition:color .2s, background .2s;
+  letter-spacing:.05em;
+}
+.react-bad:hover:not(:disabled){color:var(--chalk-soft);background:rgba(255,255,255,.03)}
+.react-bad:disabled{cursor:not-allowed;opacity:.5}
+.react-bad-cooldown{
+  font-size:.78rem;
+  color:var(--chalk-faint);
+  font-style:italic;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+
+.bad-modal-bg{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:50;
+  align-items:center;justify-content:center;
+  padding:1rem;
+}
+.bad-modal-bg.open{display:flex}
+.bad-modal{
+  background:var(--board);
+  border:1px dashed var(--chalk-soft);
+  padding:1.75rem 1.5rem;
+  max-width:420px;width:100%;
+  border-radius:4px;
+}
+.bad-modal h3{
+  margin:0 0 .5rem;
+  font-size:1.05rem;
+  font-weight:normal;
+  color:var(--chalk);
+  letter-spacing:.05em;
+}
+.bad-modal p{
+  margin:0 0 1rem;
+  font-size:.9rem;
+  color:var(--chalk-soft);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.bad-modal textarea{
+  width:100%;min-height:3.5rem;
+  background:rgba(0,0,0,.25);
+  border:1px dashed var(--chalk-soft);
+  color:var(--chalk);
+  font-family:inherit;font-size:1rem;
+  padding:.6rem;
+  border-radius:2px;
+  outline:none;resize:none;
+}
+.bad-modal textarea:focus{border-color:var(--chalk)}
+.bad-modal .row{
+  display:flex;gap:.6rem;justify-content:flex-end;
+  margin-top:1rem;
+}
+.bad-modal button{
+  background:transparent;
+  color:var(--chalk-soft);
+  border:1px solid var(--chalk-soft);
+  padding:.45rem 1.1rem;
+  font-family:inherit;font-size:.9rem;
+  border-radius:2px;cursor:pointer;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.bad-modal button:hover{color:var(--chalk);border-color:var(--chalk)}
+.bad-modal button.primary{color:var(--chalk)}
+
+footer{
+  text-align:center;
+  color:var(--chalk-soft);
+  font-size:.85rem;
+  margin-top:4rem;
+  padding-top:2rem;
+  border-top:1px dashed var(--chalk-soft);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+footer p{margin:.4rem 0}
+.preview-banner{
+  background:rgba(232,216,143,.1);
+  border:1px dashed var(--tape);
+  color:var(--tape);
+  padding:.6rem 1rem;
+  text-align:center;
+  font-size:.85rem;
+  border-radius:3px;
+  margin-bottom:2rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.yours{
+  margin:2rem 0 0;
+  padding:1.25rem 1.25rem 1rem;
+  background:rgba(232,216,143,.06);
+  border-left:2px solid var(--tape);
+  border-radius:0 3px 3px 0;
+}
+.yours-label{
+  font-size:.85rem;
+  color:var(--tape);
+  letter-spacing:.1em;
+  margin-bottom:.7rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.yours-list{list-style:none;padding:0;margin:0}
+.yours-list li{
+  padding:.5rem 0;
+  border-bottom:1px dashed rgba(232,216,143,.2);
+}
+.yours-list li:last-child{border-bottom:none}
+.yours-body{
+  font-size:1.05rem;
+  color:var(--chalk);
+  margin:0 0 .5rem;
+}
+.yours-body::before{content:"・";color:var(--chalk-soft);margin-right:.2rem}
+.yours-actions{
+  display:flex;gap:.8rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  font-size:.85rem;
+}
+.yours-actions button{
+  background:none;border:none;cursor:pointer;
+  color:var(--chalk-soft);
+  font-family:inherit;font-size:.85rem;
+  padding:.2rem .5rem;border-radius:3px;
+  transition:color .2s,background .2s;
+  letter-spacing:.05em;
+}
+.yours-actions button:hover{color:var(--chalk);background:rgba(255,255,255,.04)}
+.yours-when{
+  font-size:.78rem;
+  color:var(--chalk-faint);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  margin-bottom:.4rem;
+}
+.empty-msg{
+  text-align:center;
+  color:var(--chalk-faint);
+  font-style:italic;
+  padding:2rem 0;
+}
+
+@media (max-width:600px){
+  .wrap{padding:2rem 1rem 3rem}
+  .post{padding:1.2rem .5rem}
+  body{line-height:1.85}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="crumb">← <a href="../">Old Clock Calendar</a> ／ 黒板</nav>
+
+<div class="preview-banner">プレビュー版 — まだ書き込みは保存されません</div>
+
+<header class="intro">
+  <h1>黒　板</h1>
+  <p class="lead">
+    ここは、黒板に一言だけ書ける場所です。<br>
+    何か書きたいことがあったら書いてみてください。<br>
+    書いたものは、翌朝に出ます。
+  </p>
+</header>
+
+<section id="yours" class="yours" hidden>
+  <div class="yours-label">あなたが昨夜置いたもの（朝6時に出ます）</div>
+  <ul class="yours-list" id="yoursList"></ul>
+</section>
+
+<form class="compose" id="compose" autocomplete="off">
+  <label for="msg">いま、黒板に置きたいひと言</label>
+  <textarea id="msg" name="msg" placeholder="ひと言だけ。長く書けないようにしてあります。" maxlength="60" rows="2"></textarea>
+  <div class="meta">
+    <span class="hint">書いたあとも、明日まで考え直せます。</span>
+    <span class="count"><span id="charcount">0</span>／60</span>
+  </div>
+  <div class="actions">
+    <button type="submit" class="btn-place" id="placeBtn" disabled>そっと置く</button>
+  </div>
+  <div class="placed-msg">
+    そっと置きました。<br>
+    あす、朝の光と一緒に、黒板に出ます。
+  </div>
+</form>
+
+<div class="section-label">いま黒板にあること</div>
+
+<ul class="posts" id="posts"></ul>
+
+<div class="bad-modal-bg" id="badModalBg" role="dialog" aria-modal="true" aria-labelledby="badTitle">
+  <div class="bad-modal">
+    <h3 id="badTitle">なぜ よくないと感じましたか？</h3>
+    <p>あなたの中だけに残ります。だれにも届きません。</p>
+    <textarea id="badReason" rows="3" maxlength="200" placeholder="ひとこと、自分のために。"></textarea>
+    <div class="row">
+      <button type="button" id="badCancel">やめておく</button>
+      <button type="button" class="primary" id="badConfirm">そっと伝える</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>急がない場所として置いています。</p>
+  <p><a href="./past/">過去の黒板を見にいく</a></p>
+  <p><a href="../">Old Clock Calendar に戻る</a></p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  // ─── 設定 ───
+  // デプロイ時、ここにApps ScriptのウェブアプリURL（/exec）を貼る
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4S5op92kMNTfTSlgHtcn0rgYFSuOxPfRmYyh3t0lH-yoOXPraT0iTVnGIAsL7-LINRg/exec";
+  const PREVIEW_MODE = APPS_SCRIPT_URL.startsWith("<<");
+  const POSTS_PATH = "./posts.json";
+  const VISIBLE_LIMIT = 20;
+  const READ_FIRST_MS = 30000;
+
+  // ─── 端末ID（voterId）─ ログインなしの匿名識別 ───
+  const VOTER_KEY = "blackboard.voterId";
+  function getVoterId(){
+    let id = localStorage.getItem(VOTER_KEY);
+    if (!id) {
+      id = (crypto.randomUUID && crypto.randomUUID()) ||
+           (Date.now().toString(36) + Math.random().toString(36).slice(2));
+      localStorage.setItem(VOTER_KEY, id);
+    }
+    return id;
+  }
+
+  // ─── 自分が置いた投稿の編集トークン（端末内で覚える） ───
+  const PENDING_KEY = "blackboard.pending";
+  function getPending(){
+    try { return JSON.parse(localStorage.getItem(PENDING_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function setPending(list){
+    localStorage.setItem(PENDING_KEY, JSON.stringify(list));
+  }
+
+  // ─── 自分の押したリアクション（連打防止＆視覚状態） ───
+  const REACTION_KEY = "blackboard.reactions";
+  function getReactions(){
+    try { return JSON.parse(localStorage.getItem(REACTION_KEY) || "{}"); }
+    catch { return {}; }
+  }
+  function setReactions(obj){
+    localStorage.setItem(REACTION_KEY, JSON.stringify(obj));
+  }
+
+  // ─── API ───
+  async function api(action, payload){
+    payload = payload || {};
+    if (PREVIEW_MODE) return mockApi(action, payload);
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(Object.assign({ action: action }, payload)),
+      });
+      return await res.json();
+    } catch (err) {
+      return { error: 'network', message: String(err) };
+    }
+  }
+  function mockApi(action, payload){
+    if (action === 'place') {
+      return Promise.resolve({
+        id: 'mock-' + Math.random().toString(36).slice(2, 10),
+        editToken: 'mock-' + Math.random().toString(36).slice(2),
+        publishAt: new Date(Date.now() + 24*3600*1000).toISOString(),
+      });
+    }
+    if (action === 'mine') return Promise.resolve({ error: 'not_found' });
+    if (action === 'mine-list') return Promise.resolve({ posts: [] });
+    if (action === 'nod' || action === 'bad') return Promise.resolve({ ok: true });
+    if (action === 'edit' || action === 'withdraw') return Promise.resolve({ ok: true });
+    return Promise.resolve({});
+  }
+
+  // ─── 種データ（posts.json取得失敗時のフォールバック） ───
+  const SEED_POSTS = [
+    { id:'seed-01', body:'きょう、桜が散りはじめた', publishAt:'2026-04-29T00:00:00.000Z', nods:3 },
+    { id:'seed-02', body:'新しい仕事、まだ慣れない', publishAt:'2026-04-28T00:00:00.000Z', nods:0 },
+    { id:'seed-03', body:'昨日のコーヒーがおいしかった', publishAt:'2026-04-28T00:00:00.000Z', nods:1 },
+    { id:'seed-04', body:'Old Clock Calendar、思いつきで作った', publishAt:'2026-03-15T00:00:00.000Z', nods:2 },
+    { id:'seed-05', body:'名前を呼んでもらえると、すこし嬉しい', publishAt:'2026-04-25T00:00:00.000Z', nods:0 },
+  ];
+
+  async function loadPublicPosts(){
+    try {
+      const res = await fetch(POSTS_PATH, { cache: 'no-store' });
+      if (!res.ok) throw 0;
+      const data = await res.json();
+      if (!data.posts || data.posts.length === 0) return SEED_POSTS;
+      return data.posts;
+    } catch {
+      return SEED_POSTS;
+    }
+  }
+
+  // ─── ユーティリティ ───
+  function shuffle(arr){
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+  function whenLabel(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const diff = Date.now() - d.getTime();
+    const day = 86400000;
+    if (diff < day) return 'けさ';
+    if (diff < 2*day) return 'きのう';
+    if (diff < 7*day) return '今週';
+    if (diff < 30*day) return '今月';
+    if (diff < 365*day) return d.getFullYear() + '年' + (d.getMonth()+1) + '月';
+    return d.getFullYear() + '年' + (d.getMonth()+1) + '月';
+  }
+
+  // ─── 公開リスト描画 ───
+  async function renderPublicPosts(){
+    const list = document.getElementById('posts');
+    const all = await loadPublicPosts();
+    const visible = shuffle(all).slice(0, VISIBLE_LIMIT);
+    list.innerHTML = '';
+    if (visible.length === 0) {
+      list.innerHTML = '<li class="empty-msg">まだ何も書かれていません</li>';
+      return;
+    }
+    const reactions = getReactions();
+    visible.forEach(post => {
+      const li = document.createElement('li');
+      li.className = 'post';
+      li.dataset.id = post.id;
+      li.innerHTML =
+        '<p class="body">' + escapeHtml(post.body) + '</p>' +
+        '<div class="when">' + whenLabel(post.publishAt) + '</div>' +
+        '<div class="reactions"></div>';
+      const rxs = li.querySelector('.reactions');
+
+      // うなずく
+      const nodBtn = document.createElement('button');
+      nodBtn.type = 'button';
+      nodBtn.className = 'react-nod';
+      const initialNods = (Number(post.nods) || 0);
+      const alreadyNodded = !!(reactions[post.id] && reactions[post.id].nod);
+      nodBtn.setAttribute('aria-pressed', alreadyNodded ? 'true' : 'false');
+      nodBtn.innerHTML = 'そっとうなずく <span class="num">' +
+        (initialNods + (alreadyNodded ? 1 : 0)) + '</span>';
+      nodBtn.addEventListener('click', async () => {
+        if (reactions[post.id] && reactions[post.id].nod) return;
+        reactions[post.id] = Object.assign({}, reactions[post.id], { nod: true });
+        setReactions(reactions);
+        const num = nodBtn.querySelector('.num');
+        num.textContent = (parseInt(num.textContent, 10) || 0) + 1;
+        nodBtn.setAttribute('aria-pressed', 'true');
+        await api('nod', { postId: post.id, voterId: getVoterId() });
+      });
+      rxs.appendChild(nodBtn);
+
+      // よくないね（30秒の「まず読む」クールダウン付き）
+      const badWrap = document.createElement('span');
+      const cooldown = document.createElement('span');
+      cooldown.className = 'react-bad-cooldown';
+      cooldown.textContent = 'まだ読み終わってない';
+      badWrap.appendChild(cooldown);
+      const badBtn = document.createElement('button');
+      badBtn.type = 'button';
+      badBtn.className = 'react-bad';
+      badBtn.textContent = 'よくないね';
+      badBtn.style.display = 'none';
+      if (reactions[post.id] && reactions[post.id].bad) {
+        badBtn.disabled = true;
+        badBtn.textContent = '伝えました';
+      }
+      badWrap.appendChild(badBtn);
+      setTimeout(() => {
+        cooldown.style.display = 'none';
+        badBtn.style.display = '';
+      }, READ_FIRST_MS);
+      badBtn.addEventListener('click', () => openBadModal(post, li, badBtn));
+      rxs.appendChild(badWrap);
+
+      list.appendChild(li);
+    });
+  }
+
+  // ─── 入力フォーム ───
+  const form = document.getElementById('compose');
+  const ta = document.getElementById('msg');
+  const cc = document.getElementById('charcount');
+  const placeBtn = document.getElementById('placeBtn');
+
+  ta.addEventListener('input', () => {
+    cc.textContent = ta.value.length;
+    placeBtn.disabled = ta.value.trim().length === 0;
+  });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = ta.value.trim();
+    if (!body) return;
+    placeBtn.disabled = true;
+    const result = await api('place', { body, voterId: getVoterId() });
+    if (result.id) {
+      const pending = getPending();
+      pending.push({ id: result.id, editToken: result.editToken, publishAt: result.publishAt });
+      setPending(pending);
+      form.classList.add('placed');
+      renderYours();
+    } else {
+      placeBtn.disabled = false;
+      alert('うまく置けませんでした。少し時間を置いてもう一度。');
+    }
+  });
+
+  // ─── あなたが昨夜置いたもの ───
+  async function renderYours(){
+    const yoursSection = document.getElementById('yours');
+    const yoursList = document.getElementById('yoursList');
+    yoursList.innerHTML = '';
+    const pending = getPending();
+    if (pending.length === 0) {
+      yoursSection.hidden = true;
+      return;
+    }
+    const stillPending = [];
+    for (const p of pending) {
+      const result = await api('mine', { id: p.id, token: p.editToken });
+      if (result && result.id) {
+        stillPending.push(p);
+        const publishLabel = (new Date(result.publishAt) > new Date())
+          ? '朝6時に黒板に出ます'
+          : 'もう黒板に出ています';
+        const li = document.createElement('li');
+        li.innerHTML =
+          '<div class="yours-when">' + escapeHtml(publishLabel) + '</div>' +
+          '<p class="yours-body">' + escapeHtml(result.body) + '</p>' +
+          '<div class="yours-actions">' +
+            '<button type="button" class="yours-edit">書きなおす</button>' +
+            '<button type="button" class="yours-withdraw">そっと下げる</button>' +
+          '</div>';
+        li.querySelector('.yours-edit').addEventListener('click', () => editYours(p, result));
+        li.querySelector('.yours-withdraw').addEventListener('click', () => withdrawYours(p));
+        yoursList.appendChild(li);
+      }
+      // それ以外（取り下げ済み等）は localStorage からも落とす
+    }
+    setPending(stillPending);
+    yoursSection.hidden = stillPending.length === 0;
+  }
+
+  async function editYours(p, post){
+    const next = window.prompt('書きなおす（60字まで）', post.body);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) return;
+    const result = await api('edit', { id: p.id, token: p.editToken, body: trimmed });
+    if (result && result.ok) renderYours();
+    else alert('うまくいきませんでした');
+  }
+  async function withdrawYours(p){
+    if (!window.confirm('そっと下げますか？（誰にも見られないまま消えます）')) return;
+    await api('withdraw', { id: p.id, token: p.editToken });
+    setPending(getPending().filter(x => x.id !== p.id));
+    renderYours();
+  }
+
+  // ─── よくないねモーダル ───
+  const modalBg = document.getElementById('badModalBg');
+  const reasonTa = document.getElementById('badReason');
+  const cancel = document.getElementById('badCancel');
+  const confirmBtn = document.getElementById('badConfirm');
+  let _post = null, _li = null, _btn = null;
+
+  function openBadModal(post, li, btn){
+    _post = post; _li = li; _btn = btn;
+    reasonTa.value = '';
+    modalBg.classList.add('open');
+    setTimeout(() => reasonTa.focus(), 50);
+  }
+  function closeBadModal(){ modalBg.classList.remove('open'); _post = null; }
+  cancel.addEventListener('click', closeBadModal);
+  modalBg.addEventListener('click', (e) => { if (e.target === modalBg) closeBadModal(); });
+  confirmBtn.addEventListener('click', async () => {
+    const post = _post, li = _li, btn = _btn;
+    closeBadModal();
+    if (!post) return;
+    const reactions = getReactions();
+    reactions[post.id] = Object.assign({}, reactions[post.id], { bad: true });
+    setReactions(reactions);
+    if (btn) { btn.disabled = true; btn.textContent = '伝えました'; }
+    const result = await api('bad', { postId: post.id, voterId: getVoterId() });
+    // hidden=true なら、押した人にだけは即時で画面から外す（データは消えない）
+    if (result && result.hidden && li) {
+      li.style.transition = 'opacity .8s';
+      li.style.opacity = '0';
+      setTimeout(() => { li.style.display = 'none'; }, 800);
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalBg.classList.contains('open')) closeBadModal();
+  });
+
+  // ─── 起動 ───
+  (async () => {
+    const banner = document.querySelector('.preview-banner');
+    if (PREVIEW_MODE) {
+      banner.textContent = 'プレビュー版 — Apps Script未接続。書き込みは保存されません。';
+    } else {
+      banner.style.display = 'none';
+    }
+    await renderPublicPosts();
+    await renderYours();
+  })();
+})();
+</script>
+</body>
+</html>

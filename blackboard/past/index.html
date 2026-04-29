@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>黒板の引き出し — Old Clock Calendar</title>
+<meta name="description" content="過去の黒板を見にいく。1年前のいま頃、年月でたどる、自分の過去。">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://sakuradevjp.github.io/old-clock-calendar-notes/blackboard/past/">
+<link rel="icon" type="image/png" href="../../assets/icon.png">
+<link rel="shortcut icon" href="../../assets/favicon.ico">
+<style>
+:root{
+  --board:#1f4e4a;
+  --board-dark:#163a37;
+  --chalk:#f5f1e8;
+  --chalk-soft:#cbc6b8;
+  --chalk-faint:#8a9290;
+  --chalk-red:#ff7878;
+  --tape:#e8d88f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Hiragino Mincho ProN","Yu Mincho","游明朝","ヒラギノ明朝 ProN W3",serif;
+  background:var(--board);
+  color:var(--chalk);
+  line-height:1.95;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(255,255,255,.04), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(255,255,255,.03), transparent 50%);
+}
+.wrap{max-width:680px;margin:0 auto;padding:3rem 1.25rem 5rem}
+.crumb{
+  text-align:left;font-size:.9rem;color:var(--chalk-soft);
+  margin-bottom:2rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.crumb a{color:var(--chalk-soft);text-decoration:none;border-bottom:1px dashed var(--chalk-soft)}
+.crumb a:hover{color:var(--chalk)}
+
+header.intro{text-align:center;padding:1rem 0 2.5rem}
+header.intro h1{
+  font-size:clamp(1.6rem,5vw,2.2rem);
+  margin:0 0 1rem;
+  letter-spacing:.2em;
+  color:var(--chalk);
+  font-weight:normal;
+}
+header.intro .lead{
+  font-size:.95rem;
+  color:var(--chalk-soft);
+  margin:0;
+  letter-spacing:.05em;
+}
+
+.section-label{
+  text-align:center;
+  font-size:.85rem;
+  color:var(--chalk-soft);
+  letter-spacing:.3em;
+  margin:2.5rem 0 1.2rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.section-label::before,.section-label::after{
+  content:"──";
+  margin:0 .8rem;
+  color:var(--chalk-faint);
+}
+
+.posts{list-style:none;padding:0;margin:0}
+.post{
+  padding:1.2rem 1rem;
+  border-bottom:1px dashed rgba(203,198,184,.2);
+}
+.post:last-child{border-bottom:none}
+.post .body{
+  font-size:1.1rem;
+  line-height:1.85;
+  color:var(--chalk);
+  margin:0 0 .4rem;
+  letter-spacing:.04em;
+}
+.post .body::before{
+  content:"・";
+  color:var(--chalk-soft);
+  margin-right:.2rem;
+}
+.post .when{
+  font-size:.78rem;
+  color:var(--chalk-faint);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+
+.empty-msg{
+  text-align:center;
+  color:var(--chalk-faint);
+  font-style:italic;
+  padding:1.5rem 0;
+  font-size:.95rem;
+}
+
+.months{
+  list-style:none;padding:0;margin:0;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.month{
+  border-bottom:1px dashed rgba(203,198,184,.2);
+}
+.month:last-child{border-bottom:none}
+.month-toggle{
+  width:100%;
+  text-align:left;
+  background:none;border:none;
+  color:var(--chalk);
+  padding:.9rem .5rem;
+  font-family:inherit;
+  font-size:1rem;
+  cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;
+  letter-spacing:.05em;
+  transition:background .2s;
+}
+.month-toggle:hover{background:rgba(255,255,255,.03)}
+.month-count{color:var(--chalk-faint);font-size:.85rem}
+.month-arrow{color:var(--chalk-faint);margin-left:.5rem;transition:transform .2s}
+.month[open] .month-arrow{transform:rotate(90deg)}
+.month-list{
+  list-style:none;padding:0;margin:0 0 1rem;
+  display:none;
+  font-family:"Hiragino Mincho ProN","Yu Mincho","游明朝",serif;
+}
+.month[open] .month-list{display:block}
+.month-list li{
+  padding:.7rem 1rem;
+  border-bottom:1px dashed rgba(203,198,184,.15);
+  font-size:1rem;
+}
+.month-list li:last-child{border-bottom:none}
+.month-list li::before{content:"・";color:var(--chalk-soft);margin-right:.2rem}
+.month-list .day{font-size:.75rem;color:var(--chalk-faint);margin-left:.5rem;font-family:"Yu Gothic",sans-serif}
+
+.yours-toggle{
+  display:block;
+  margin:0 auto;
+  background:none;
+  color:var(--chalk-soft);
+  border:1px dashed var(--chalk-soft);
+  padding:.55rem 1.4rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  font-size:.9rem;
+  letter-spacing:.1em;
+  cursor:pointer;
+  border-radius:2px;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.yours-toggle:hover{color:var(--chalk);border-color:var(--chalk);background:rgba(255,255,255,.04)}
+.yours-content{
+  margin-top:1.5rem;
+  padding:1rem 1.25rem;
+  background:rgba(232,216,143,.06);
+  border-left:2px solid var(--tape);
+  border-radius:0 3px 3px 0;
+  display:none;
+}
+.yours-content.open{display:block}
+.yours-content .post{padding:.9rem 0}
+
+footer{
+  text-align:center;
+  color:var(--chalk-soft);
+  font-size:.85rem;
+  margin-top:4rem;
+  padding-top:2rem;
+  border-top:1px dashed var(--chalk-soft);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+footer p{margin:.4rem 0}
+footer a{color:var(--tape);text-decoration:none;border-bottom:1px solid var(--tape)}
+footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
+
+@media (max-width:600px){
+  .wrap{padding:2rem 1rem 3rem}
+  body{line-height:1.85}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="crumb">← <a href="../">黒板</a> ／ 引き出し</nav>
+
+<header class="intro">
+  <h1>黒板の引き出し</h1>
+  <p class="lead">
+    かつて、誰かがここに置いた一言たち。
+  </p>
+</header>
+
+<div class="section-label">1年前のいま頃</div>
+<ul class="posts" id="aYearAgo"></ul>
+
+<div class="section-label">月でたどる</div>
+<ul class="months" id="months"></ul>
+
+<div class="section-label">あなたの過去</div>
+<button type="button" class="yours-toggle" id="yoursToggle">この端末から置いたものを見る</button>
+<div class="yours-content" id="yoursContent">
+  <ul class="posts" id="yoursPosts"></ul>
+</div>
+
+<footer>
+  <p><a href="../">黒板に戻る</a></p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  // ─── 設定 ───
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4S5op92kMNTfTSlgHtcn0rgYFSuOxPfRmYyh3t0lH-yoOXPraT0iTVnGIAsL7-LINRg/exec";
+  const PREVIEW_MODE = APPS_SCRIPT_URL.startsWith("<<");
+  const POSTS_PATH = "../posts.json";
+  const VOTER_KEY = "blackboard.voterId";
+
+  function getVoterId(){
+    return localStorage.getItem(VOTER_KEY) || '';
+  }
+
+  async function api(action, payload){
+    payload = payload || {};
+    if (PREVIEW_MODE) {
+      if (action === 'mine-list') return { posts: [] };
+      return {};
+    }
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(Object.assign({ action: action }, payload)),
+      });
+      return await res.json();
+    } catch {
+      return { error: 'network' };
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  function pad2(n){ return String(n).padStart(2, '0'); }
+
+  function ymKey(d){
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+  }
+  function ymLabel(key){
+    const [y, m] = key.split('-');
+    return y + '年' + Number(m) + '月';
+  }
+
+  async function loadPosts(){
+    try {
+      const res = await fetch(POSTS_PATH, { cache: 'no-store' });
+      if (!res.ok) throw 0;
+      const data = await res.json();
+      return Array.isArray(data.posts) ? data.posts : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function renderEmpty(elId, msg){
+    const el = document.getElementById(elId);
+    el.innerHTML = '<li class="empty-msg">' + escapeHtml(msg) + '</li>';
+  }
+
+  function renderPostList(posts, ulId, withDay){
+    const el = document.getElementById(ulId);
+    el.innerHTML = '';
+    posts.forEach(p => {
+      const d = new Date(p.publishAt);
+      const li = document.createElement('li');
+      if (withDay) {
+        li.className = '';
+        li.innerHTML = escapeHtml(p.body) +
+          '<span class="day">' + (isNaN(d) ? '' : (d.getMonth()+1) + '月' + d.getDate() + '日') + '</span>';
+      } else {
+        li.className = 'post';
+        li.innerHTML =
+          '<p class="body">' + escapeHtml(p.body) + '</p>' +
+          '<div class="when">' + (isNaN(d) ? '' : d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日') + '</div>';
+      }
+      el.appendChild(li);
+    });
+  }
+
+  // ─── 1年前のいま頃 ───
+  function renderAYearAgo(allPosts){
+    const now = new Date();
+    const thisMonth = now.getMonth(); // 0-indexed
+    const thisYear = now.getFullYear();
+    const matched = allPosts.filter(p => {
+      const d = new Date(p.publishAt);
+      if (isNaN(d)) return false;
+      // 1年以上前で、同じ月の投稿
+      const yearDiff = thisYear - d.getFullYear();
+      return yearDiff >= 1 && d.getMonth() === thisMonth;
+    });
+    if (matched.length === 0) {
+      renderEmpty('aYearAgo', 'まだ過去がない場所です。');
+      return;
+    }
+    // 古い順
+    matched.sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt));
+    renderPostList(matched, 'aYearAgo', false);
+  }
+
+  // ─── 月でたどる ───
+  function renderMonths(allPosts){
+    const el = document.getElementById('months');
+    el.innerHTML = '';
+    if (allPosts.length === 0) {
+      renderEmpty('months', 'まだ何も書かれていません。');
+      return;
+    }
+    // ym別にグルーピング
+    const groups = {};
+    allPosts.forEach(p => {
+      const d = new Date(p.publishAt);
+      if (isNaN(d)) return;
+      const key = ymKey(d);
+      (groups[key] = groups[key] || []).push(p);
+    });
+    // 新しい順
+    const keys = Object.keys(groups).sort().reverse();
+    keys.forEach(key => {
+      const li = document.createElement('li');
+      li.className = 'month';
+      const posts = groups[key].sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt));
+      li.innerHTML =
+        '<button type="button" class="month-toggle">' +
+          '<span>' + escapeHtml(ymLabel(key)) + '</span>' +
+          '<span><span class="month-count">' + posts.length + '件</span><span class="month-arrow">▸</span></span>' +
+        '</button>' +
+        '<ul class="month-list"></ul>';
+      const innerUl = li.querySelector('.month-list');
+      posts.forEach(p => {
+        const d = new Date(p.publishAt);
+        const item = document.createElement('li');
+        item.innerHTML = escapeHtml(p.body) +
+          '<span class="day">' + (d.getMonth()+1) + '月' + d.getDate() + '日</span>';
+        innerUl.appendChild(item);
+      });
+      li.querySelector('.month-toggle').addEventListener('click', () => {
+        if (li.hasAttribute('open')) li.removeAttribute('open');
+        else li.setAttribute('open', '');
+      });
+      el.appendChild(li);
+    });
+  }
+
+  // ─── あなたの過去 ───
+  let yoursLoaded = false;
+  document.getElementById('yoursToggle').addEventListener('click', async () => {
+    const content = document.getElementById('yoursContent');
+    if (!yoursLoaded) {
+      yoursLoaded = true;
+      const voterId = getVoterId();
+      if (!voterId) {
+        renderEmpty('yoursPosts', 'まだこの端末からは何も置いていません。');
+      } else {
+        const result = await api('mine-list', { voterId });
+        const posts = (result && result.posts) || [];
+        if (posts.length === 0) {
+          renderEmpty('yoursPosts', 'まだこの端末からは何も置いていません。');
+        } else {
+          posts.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt));
+          renderPostList(posts, 'yoursPosts', false);
+        }
+      }
+    }
+    content.classList.toggle('open');
+    const btn = document.getElementById('yoursToggle');
+    btn.textContent = content.classList.contains('open')
+      ? '閉じる'
+      : 'この端末から置いたものを見る';
+  });
+
+  // ─── 起動 ───
+  (async () => {
+    const allPosts = await loadPosts();
+    renderAYearAgo(allPosts);
+    renderMonths(allPosts);
+  })();
+})();
+</script>
+</body>
+</html>
