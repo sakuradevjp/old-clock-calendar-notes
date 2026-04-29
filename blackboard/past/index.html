@@ -280,7 +280,7 @@ footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
     el.innerHTML = '<li class="empty-msg">' + escapeHtml(msg) + '</li>';
   }
 
-  function renderPostList(posts, ulId, withDay){
+  function renderPostList(posts, ulId, withDay, withWithdraw){
     const el = document.getElementById(ulId);
     el.innerHTML = '';
     posts.forEach(p => {
@@ -292,12 +292,31 @@ footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
           '<span class="day">' + (isNaN(d) ? '' : (d.getMonth()+1) + '月' + d.getDate() + '日') + '</span>';
       } else {
         li.className = 'post';
-        li.innerHTML =
+        let html =
           '<p class="body">' + escapeHtml(p.body) + '</p>' +
           '<div class="when">' + (isNaN(d) ? '' : d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日') + '</div>';
+        if (withWithdraw) {
+          html += '<div class="yours-actions" style="margin-top:.5rem">' +
+                    '<button type="button" class="yours-withdraw">そっと下げる</button>' +
+                  '</div>';
+        }
+        li.innerHTML = html;
+        if (withWithdraw) {
+          li.querySelector('.yours-withdraw').addEventListener('click', () => withdrawPost(p));
+        }
       }
       el.appendChild(li);
     });
+  }
+
+  async function withdrawPost(post){
+    if (!window.confirm('そっと下げますか？（誰にも見られないまま消えます）')) return;
+    const result = await api('withdraw', { id: post.id, voterId: getVoterId() });
+    if (result && result.ok) {
+      await loadYours();  // 再描画
+    } else {
+      alert('うまく下げられませんでした');
+    }
   }
 
   // ─── 1年前のいま頃 ───
@@ -366,24 +385,28 @@ footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
   }
 
   // ─── あなたの過去 ───
+  async function loadYours(){
+    const voterId = getVoterId();
+    if (!voterId) {
+      renderEmpty('yoursPosts', 'まだこの端末からは何も置いていません。');
+      return;
+    }
+    const result = await api('mine-list', { voterId });
+    const posts = (result && result.posts) || [];
+    if (posts.length === 0) {
+      renderEmpty('yoursPosts', 'まだこの端末からは何も置いていません。');
+      return;
+    }
+    posts.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt));
+    renderPostList(posts, 'yoursPosts', false, true);  // 取り下げボタン付き
+  }
+
   let yoursLoaded = false;
   document.getElementById('yoursToggle').addEventListener('click', async () => {
     const content = document.getElementById('yoursContent');
     if (!yoursLoaded) {
       yoursLoaded = true;
-      const voterId = getVoterId();
-      if (!voterId) {
-        renderEmpty('yoursPosts', 'まだこの端末からは何も置いていません。');
-      } else {
-        const result = await api('mine-list', { voterId });
-        const posts = (result && result.posts) || [];
-        if (posts.length === 0) {
-          renderEmpty('yoursPosts', 'まだこの端末からは何も置いていません。');
-        } else {
-          posts.sort((a, b) => new Date(b.publishAt) - new Date(a.publishAt));
-          renderPostList(posts, 'yoursPosts', false);
-        }
-      }
+      await loadYours();
     }
     content.classList.toggle('open');
     const btn = document.getElementById('yoursToggle');
