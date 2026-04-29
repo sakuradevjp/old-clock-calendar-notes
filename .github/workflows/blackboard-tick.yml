@@ -1,0 +1,37 @@
+name: Blackboard tick
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # 5分ごと
+  workflow_dispatch:        # 手動でも回せる
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 黒板を整理
+        env:
+          APPS_SCRIPT_URL: ${{ secrets.BLACKBOARD_APPS_SCRIPT_URL }}
+          DUMP_SECRET:     ${{ secrets.BLACKBOARD_DUMP_SECRET }}
+        run: node blackboard/scripts/process.mjs
+
+      - name: 変更があれば commit
+        run: |
+          git config user.name "blackboard-bot"
+          git config user.email "blackboard-bot@users.noreply.github.com"
+          if git diff --quiet blackboard/posts.json; then
+            echo "黒板に変化なし"
+          else
+            git add blackboard/posts.json
+            git commit -m "黒板を更新"
+            git push
+          fi
