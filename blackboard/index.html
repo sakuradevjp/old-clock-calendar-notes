@@ -352,22 +352,78 @@ footer p{margin:.4rem 0}
   font-style:italic;
   padding:2rem 0;
 }
-.key-hint{
-  margin:3rem auto 0;
-  max-width:480px;
+.key-link-area{
+  margin-top:1.2rem;
   text-align:center;
-  font-size:.85rem;
-  color:var(--chalk-faint);
   font-family:"Yu Gothic","游ゴシック",sans-serif;
-  line-height:1.9;
+  font-size:.85rem;
+}
+.key-link-area a{
+  color:var(--chalk-soft);
+  border-bottom:1px dashed var(--chalk-soft);
+  padding-bottom:1px;
+  letter-spacing:.05em;
+}
+.key-link-area a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
+
+.key-modal-bg{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:60;
+  align-items:center;justify-content:center;
   padding:1rem;
-  border-top:1px dashed rgba(203,198,184,.25);
-  border-bottom:1px dashed rgba(203,198,184,.25);
 }
-.key-hint a{
+.key-modal-bg.open{display:flex}
+.key-modal{
+  background:var(--board);
+  border:1px dashed var(--chalk-soft);
+  padding:1.75rem 1.5rem;
+  max-width:480px;width:100%;
+  border-radius:4px;
+}
+.key-modal h3{
+  margin:0 0 .8rem;
+  font-size:1.1rem;
+  font-weight:normal;
+  color:var(--chalk);
+  letter-spacing:.1em;
+  text-align:center;
+}
+.key-modal p{
+  margin:0 0 1.1rem;
+  font-size:.9rem;
+  color:var(--chalk-soft);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  line-height:1.85;
+}
+.key-modal .display{
+  margin-bottom:1rem;
+  padding:.8rem;
+  background:rgba(0,0,0,.25);
+  font-family:"Consolas","Courier New",monospace;
+  font-size:.82rem;
   color:var(--tape);
-  border-bottom:1px solid var(--tape);
+  word-break:break-all;
+  border-radius:2px;
+  user-select:all;
+  text-align:center;
 }
+.key-modal .row{
+  display:flex;gap:.6rem;justify-content:center;
+}
+.key-modal button{
+  background:transparent;
+  color:var(--chalk-soft);
+  border:1px solid var(--chalk-soft);
+  padding:.45rem 1.2rem;
+  font-family:inherit;font-size:.9rem;
+  border-radius:2px;cursor:pointer;
+  letter-spacing:.05em;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.key-modal button:hover{color:var(--chalk);border-color:var(--chalk);background:rgba(255,255,255,.04)}
+.key-modal button.copied{color:var(--tape);border-color:var(--tape)}
 
 @media (max-width:600px){
   .wrap{padding:2rem 1rem 3rem}
@@ -408,6 +464,9 @@ footer p{margin:.4rem 0}
   <div class="actions">
     <button type="submit" class="btn-place" id="placeBtn" disabled>そっと置く</button>
   </div>
+  <div class="key-link-area">
+    <a href="#" id="keyAboutLink">秘密の合言葉について</a>
+  </div>
   <div class="placed-msg">
     そっと置きました。<br>
     あす、朝の光と一緒に、黒板に出ます。
@@ -430,11 +489,21 @@ footer p{margin:.4rem 0}
   </div>
 </div>
 
-<p class="key-hint">
-  書いた言葉が、ある日ふいに見えなくならないように。<br>
-  <a href="./past/#key">秘密の合言葉</a>をどこかに控えておくと、<br>
-  別の端末や、ブラウザを掃除した後でも、自分の過去に戻ってこられます。
-</p>
+<div class="key-modal-bg" id="keyModalBg" role="dialog" aria-modal="true" aria-labelledby="keyModalTitle">
+  <div class="key-modal">
+    <h3 id="keyModalTitle">秘密の合言葉</h3>
+    <p>
+      あなたの言葉とこの端末を結んでいる、ひと連なりの文字。<br>
+      どこかに控えておけば、別の端末や、ブラウザを掃除した後でも、自分が書いたものに戻ってこられます。<br>
+      他人には見せないでください。あなたとして書かれてしまいます。
+    </p>
+    <div class="display" id="keyModalDisplay"></div>
+    <div class="row">
+      <button type="button" id="keyModalCopy">コピー</button>
+      <button type="button" id="keyModalClose">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <p>急がない場所として置いています。</p>
@@ -738,6 +807,43 @@ footer p{margin:.4rem 0}
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modalBg.classList.contains('open')) closeBadModal();
+  });
+
+  // ─── 秘密の合言葉モーダル ───
+  const keyModalBg = document.getElementById('keyModalBg');
+  const keyModalDisplay = document.getElementById('keyModalDisplay');
+  const keyModalCopy = document.getElementById('keyModalCopy');
+  const keyModalClose = document.getElementById('keyModalClose');
+  document.getElementById('keyAboutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    keyModalDisplay.textContent = getVoterId();
+    keyModalCopy.textContent = 'コピー';
+    keyModalCopy.classList.remove('copied');
+    keyModalBg.classList.add('open');
+  });
+  keyModalCopy.addEventListener('click', async () => {
+    const text = keyModalDisplay.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      keyModalCopy.textContent = 'コピーしました';
+      keyModalCopy.classList.add('copied');
+    } catch {
+      // クリップボードAPIが使えない時はテキスト選択にフォールバック
+      const range = document.createRange();
+      range.selectNode(keyModalDisplay);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+  keyModalClose.addEventListener('click', () => keyModalBg.classList.remove('open'));
+  keyModalBg.addEventListener('click', (e) => {
+    if (e.target === keyModalBg) keyModalBg.classList.remove('open');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && keyModalBg.classList.contains('open')) {
+      keyModalBg.classList.remove('open');
+    }
   });
 
   // ─── 起動 ───
