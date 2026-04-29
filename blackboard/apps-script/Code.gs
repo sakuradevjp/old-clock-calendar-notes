@@ -200,8 +200,10 @@ function handleEdit(data) {
   const sheet = getSheet(SHEET_NAME);
   const f = findRow(sheet, data.id);
   if (!f) return { error: 'not_found' };
-  const [, , , , editToken, status] = f.values;
-  if (editToken !== data.token) return { error: 'forbidden' };
+  const editToken = f.values[4];
+  const status = f.values[5];
+  const postVoterId = f.values[9];
+  if (!isAuthor(data, editToken, postVoterId)) return { error: 'forbidden' };
   if (status !== 'pending') return { error: 'gone' };
   const body = String(data.body || '').trim();
   if (!body || body.length > MAX_BODY_CHARS) return { error: 'invalid_body' };
@@ -213,12 +215,22 @@ function handleWithdraw(data) {
   const sheet = getSheet(SHEET_NAME);
   const f = findRow(sheet, data.id);
   if (!f) return { error: 'not_found' };
-  const [, , , , editToken, status] = f.values;
-  if (editToken !== data.token) return { error: 'forbidden' };
+  const editToken = f.values[4];
+  const status = f.values[5];
+  const postVoterId = f.values[9];
+  if (!isAuthor(data, editToken, postVoterId)) return { error: 'forbidden' };
   if (status !== 'pending') return { error: 'gone' };
   sheet.getRange(f.rowIndex, 6).setValue('withdrawn');
   sheet.getRange(f.rowIndex, 9).setValue(new Date().toISOString());
   return { ok: true };
+}
+
+// editToken が一致するか、または同じ端末（voterId）からのリクエストなら本人と認める。
+// ユーザーが localStorage の編集トークンを失っても、voterId だけで自分の投稿を守れる。
+function isAuthor(data, editToken, postVoterId) {
+  const tokenOk = data.token && editToken === data.token;
+  const voterOk = data.voterId && postVoterId && postVoterId === data.voterId;
+  return tokenOk || voterOk;
 }
 
 function alreadyVoted(postId, voterId, voteType) {

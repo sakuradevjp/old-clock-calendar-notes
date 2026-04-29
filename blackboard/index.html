@@ -444,15 +444,9 @@ footer p{margin:.4rem 0}
     return id;
   }
 
-  // ─── 自分が置いた投稿の編集トークン（端末内で覚える） ───
-  const PENDING_KEY = "blackboard.pending";
-  function getPending(){
-    try { return JSON.parse(localStorage.getItem(PENDING_KEY) || "[]"); }
-    catch { return []; }
-  }
-  function setPending(list){
-    localStorage.setItem(PENDING_KEY, JSON.stringify(list));
-  }
+  // 注: 以前は localStorage に編集トークンを保存していたが、
+  // リロード事故で取り下げ不能になるケースがあったので廃止。
+  // いまは voterId による本人認証で mine-list / edit / withdraw を行う。
 
   // ─── 自分の押したリアクション（連打防止＆視覚状態） ───
   const REACTION_KEY = "blackboard.reactions";
@@ -632,68 +626,59 @@ footer p{margin:.4rem 0}
       honey: honey.value,
     });
     if (result.id) {
-      const pending = getPending();
-      pending.push({ id: result.id, editToken: result.editToken, publishAt: result.publishAt });
-      setPending(pending);
       form.classList.add('placed');
-      renderYours();
+      renderYours();  // mine-list は voterId を見るので、result の id 待たずとも反映される
     } else {
       placeBtn.disabled = false;
-      // サーバが優しいメッセージをくれたらそれを表示
       const msg = (result && result.message) || 'うまく置けませんでした。少し時間を置いてもう一度。';
       alert(msg);
     }
   });
 
-  // ─── あなたが昨夜置いたもの ───
+  // ─── あなたが昨夜置いたもの（voterIdベース、editTokenに依存しない） ───
   async function renderYours(){
     const yoursSection = document.getElementById('yours');
     const yoursList = document.getElementById('yoursList');
     yoursList.innerHTML = '';
-    const pending = getPending();
-    if (pending.length === 0) {
+    const voterId = getVoterId();
+    const result = await api('mine-list', { voterId });
+    const posts = (result && result.posts) || [];
+    if (posts.length === 0) {
       yoursSection.hidden = true;
       return;
     }
-    const stillPending = [];
-    for (const p of pending) {
-      const result = await api('mine', { id: p.id, token: p.editToken });
-      if (result && result.id) {
-        stillPending.push(p);
-        const publishLabel = (new Date(result.publishAt) > new Date())
-          ? '朝6時に黒板に出ます'
-          : 'もう黒板に出ています';
-        const li = document.createElement('li');
-        li.innerHTML =
-          '<div class="yours-when">' + escapeHtml(publishLabel) + '</div>' +
-          '<p class="yours-body">' + escapeHtml(result.body) + '</p>' +
-          '<div class="yours-actions">' +
-            '<button type="button" class="yours-edit">書きなおす</button>' +
-            '<button type="button" class="yours-withdraw">そっと下げる</button>' +
-          '</div>';
-        li.querySelector('.yours-edit').addEventListener('click', () => editYours(p, result));
-        li.querySelector('.yours-withdraw').addEventListener('click', () => withdrawYours(p));
-        yoursList.appendChild(li);
-      }
-      // それ以外（取り下げ済み等）は localStorage からも落とす
-    }
-    setPending(stillPending);
-    yoursSection.hidden = stillPending.length === 0;
+    posts.sort((a, b) => new Date(b.createdAt || b.publishAt) - new Date(a.createdAt || a.publishAt));
+    posts.forEach(post => {
+      const publishLabel = (new Date(post.publishAt) > new Date())
+        ? '朝6時に黒板に出ます'
+        : 'もう黒板に出ています';
+      const li = document.createElement('li');
+      li.innerHTML =
+        '<div class="yours-when">' + escapeHtml(publishLabel) + '</div>' +
+        '<p class="yours-body">' + escapeHtml(post.body) + '</p>' +
+        '<div class="yours-actions">' +
+          '<button type="button" class="yours-edit">書きなおす</button>' +
+          '<button type="button" class="yours-withdraw">そっと下げる</button>' +
+        '</div>';
+      li.querySelector('.yours-edit').addEventListener('click', () => editYours(post));
+      li.querySelector('.yours-withdraw').addEventListener('click', () => withdrawYours(post));
+      yoursList.appendChild(li);
+    });
+    yoursSection.hidden = false;
   }
 
-  async function editYours(p, post){
+  async function editYours(post){
     const next = window.prompt('書きなおす（60字まで）', post.body);
     if (next === null) return;
     const trimmed = next.trim();
     if (!trimmed) return;
-    const result = await api('edit', { id: p.id, token: p.editToken, body: trimmed });
+    const result = await api('edit', { id: post.id, voterId: getVoterId(), body: trimmed });
     if (result && result.ok) renderYours();
     else alert('うまくいきませんでした');
   }
-  async function withdrawYours(p){
+  async function withdrawYours(post){
     if (!window.confirm('そっと下げますか？（誰にも見られないまま消えます）')) return;
-    await api('withdraw', { id: p.id, token: p.editToken });
-    setPending(getPending().filter(x => x.id !== p.id));
+    await api('withdraw', { id: post.id, voterId: getVoterId() });
     renderYours();
   }
 
