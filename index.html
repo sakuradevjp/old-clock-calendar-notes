@@ -10,6 +10,8 @@
 <meta property="og:image" content="assets/hero.png">
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://sakuradevjp.github.io/old-clock-calendar-notes/">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="shortcut icon" href="assets/favicon.ico">
 <style>
 :root{
   --board:#1f4e4a;
@@ -37,6 +39,15 @@ body{
 .crumb a{color:var(--chalk-soft);text-decoration:none;border-bottom:1px dashed var(--chalk-soft)}
 .crumb a:hover{color:var(--chalk)}
 header.hero{text-align:center;padding:1.5rem 0 1.5rem}
+header.hero .app-icon{
+  display:block;
+  width:128px;height:128px;
+  margin:0 auto 1.25rem;
+  background:var(--chalk);
+  padding:14px;
+  border-radius:50%;
+  box-shadow:0 8px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.05);
+}
 header.hero h1{
   font-size:clamp(1.8rem,5.5vw,3rem);
   margin:0 0 1rem;
@@ -156,6 +167,7 @@ footer{
 <nav class="crumb">← <a href="https://sakuradevjp.github.io/">sakuradev</a> ／ Old Clock Calendar</nav>
 
 <header class="hero">
+  <img class="app-icon" src="assets/icon.png" alt="Old Clock Calendar アプリアイコン" width="128" height="128">
   <span class="badge">作品紹介 / 個人開発</span>
   <h1 style="margin-top:1rem">昭和の黒板を、<br>デスクトップに。</h1>
   <p class="tagline"><strong>Old Clock Calendar</strong><br>教室の片隅にあった、あの時計とカレンダー。</p>
