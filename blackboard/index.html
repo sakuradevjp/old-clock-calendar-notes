@@ -720,6 +720,10 @@ footer p{margin:.4rem 0}
 
   // ─── 起動 ───
   (async () => {
+    // ブラウザの自動ストレージ掃除から voterId を守る
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
     const banner = document.querySelector('.preview-banner');
     if (PREVIEW_MODE) {
       banner.textContent = 'プレビュー版 — Apps Script未接続。書き込みは保存されません。';

@@ -109,6 +109,61 @@ header.intro .lead{
   letter-spacing:.05em;
   margin-top:.3rem;
 }
+.key-area{
+  margin:1.5rem 0 0;
+  padding:1.25rem;
+  text-align:center;
+  border:1px dashed var(--chalk-soft);
+  border-radius:3px;
+  background:rgba(0,0,0,.1);
+}
+.key-area .desc{
+  font-size:.8rem;
+  color:var(--chalk-faint);
+  margin:0 0 1rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  line-height:1.7;
+}
+.key-area button{
+  background:transparent;
+  color:var(--chalk-soft);
+  border:1px solid var(--chalk-soft);
+  padding:.45rem 1rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  font-size:.85rem;
+  border-radius:2px;
+  cursor:pointer;
+  margin:0 .3rem;
+  letter-spacing:.05em;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.key-area button:hover{color:var(--chalk);border-color:var(--chalk);background:rgba(255,255,255,.04)}
+.key-display{
+  margin-top:1rem;
+  padding:.7rem;
+  background:rgba(0,0,0,.2);
+  font-family:"Consolas","Courier New",monospace;
+  font-size:.8rem;
+  color:var(--tape);
+  word-break:break-all;
+  display:none;
+  border-radius:2px;
+  user-select:all;
+}
+.key-input{
+  width:100%;
+  margin-top:.7rem;
+  background:rgba(0,0,0,.2);
+  border:1px solid var(--chalk-soft);
+  color:var(--chalk);
+  padding:.6rem;
+  font-family:"Consolas","Courier New",monospace;
+  font-size:.85rem;
+  border-radius:2px;
+  display:none;
+  outline:none;
+}
+.key-input:focus{border-color:var(--chalk)}
 
 .months{
   list-style:none;padding:0;margin:0;
@@ -217,6 +272,19 @@ footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
 <button type="button" class="yours-toggle" id="yoursToggle">この端末から置いたものを見る</button>
 <div class="yours-content" id="yoursContent">
   <ul class="posts" id="yoursPosts"></ul>
+</div>
+
+<div class="section-label">あなたの鍵</div>
+<div class="key-area">
+  <p class="desc">
+    この端末で書いた記録を、別の端末でも見たい時のために。<br>
+    ブラウザの掃除で鍵が消えた時の復元にも使えます。<br>
+    他人に見せると、その人があなたとして書ける／取り下げられるので注意。
+  </p>
+  <button type="button" id="keyShow">鍵を見る</button>
+  <button type="button" id="keyEnter">別の鍵を入れる</button>
+  <div class="key-display" id="keyDisplay"></div>
+  <input type="text" class="key-input" id="keyInput" placeholder="鍵を貼り付けて Enter" autocomplete="off" spellcheck="false">
 </div>
 
 <footer>
@@ -427,8 +495,40 @@ footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
       : 'この端末から置いたものを見る';
   });
 
+  // ─── 鍵（voterId）の表示・入れ替え ───
+  const keyDisplay = document.getElementById('keyDisplay');
+  const keyInput = document.getElementById('keyInput');
+  document.getElementById('keyShow').addEventListener('click', () => {
+    keyDisplay.textContent = getVoterId();
+    keyDisplay.style.display = 'block';
+    keyInput.style.display = 'none';
+  });
+  document.getElementById('keyEnter').addEventListener('click', () => {
+    keyInput.value = '';
+    keyInput.style.display = 'block';
+    keyDisplay.style.display = 'none';
+    setTimeout(() => keyInput.focus(), 30);
+  });
+  keyInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const v = keyInput.value.trim();
+    if (!v) return;
+    if (v.length < 8 || v.length > 64) {
+      alert('鍵の形がおかしいかも');
+      return;
+    }
+    localStorage.setItem('blackboard.voterId', v);
+    alert('鍵を入れました。読み込み直します。');
+    location.reload();
+  });
+
   // ─── 起動 ───
   (async () => {
+    // 自動退避を抑える（多くのブラウザで尊重される）
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
     const allPosts = await loadPosts();
     renderAYearAgo(allPosts);
     renderMonths(allPosts);
