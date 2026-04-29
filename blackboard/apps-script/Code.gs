@@ -20,6 +20,14 @@ const VOTES_SHEET = 'votes';
 const PUBLISH_HOUR_JST = 6;          // 翌朝6時に公開
 const VOTE_REMOVAL_THRESHOLD = 3;    // この件数のよくないねで非表示（3年保持・即応の方針）
 const MAX_BODY_CHARS = 60;
+const MIN_BODY_CHARS = 2;            // あまりに短い文は弾く
+
+// ─── スパム対策のレート制限 ───
+const RATE_GLOBAL_PER_HOUR     = 30;  // 全体: 1時間に30投稿まで
+const RATE_GLOBAL_PER_MINUTE   = 5;   // 全体: 1分に5投稿まで
+const RATE_VOTER_PER_MINUTE    = 1;   // 1端末あたり1分に1投稿まで
+const DEDUP_TTL_SECONDS        = 6 * 3600; // 同じ本文を6時間ブロック
+
 
 function doPost(e) {
   try {
@@ -87,10 +95,21 @@ function findRow(sheet, id) {
 }
 
 function handlePlace(data) {
+  // ハニーポット: hidden field が埋まってたら bot 確定。黙って弾く。
+  if (data.honey) return { error: 'rejected' };
+
   const body = String(data.body || '').trim();
   if (!body) return { error: 'empty' };
+  if (body.length < MIN_BODY_CHARS) return { error: 'too_short' };
   if (body.length > MAX_BODY_CHARS) return { error: 'too_long' };
+
   const voterId = String(data.voterId || '').slice(0, 64);
+  if (!voterId) return { error: 'no_voter' };
+
+  // レート制限と重複チェック
+  const limited = checkRateLimits(voterId, body);
+  if (limited) return limited;
+
   const id = Utilities.getUuid();
   const editToken = Utilities.getUuid().replace(/-/g, '');
   const createdAt = new Date().toISOString();
@@ -98,6 +117,53 @@ function handlePlace(data) {
   const sheet = getSheet(SHEET_NAME);
   sheet.appendRow([id, createdAt, publishAt, body, editToken, 'pending', 0, 0, '', voterId]);
   return { id, editToken, publishAt };
+}
+
+function checkRateLimits(voterId, body) {
+  const cache = CacheService.getScriptCache();
+  const now = Date.now();
+
+  // 同じ端末から1分に1回まで
+  const voterKey = 'rate:voter:' + voterId;
+  if (cache.get(voterKey)) {
+    return { error: 'too_fast', message: 'もう少しゆっくり置きにきてください' };
+  }
+
+  // 全体で1分5投稿
+  const minuteKey = 'rate:g:m:' + Math.floor(now / 60000);
+  const minuteCount = parseInt(cache.get(minuteKey) || '0', 10);
+  if (minuteCount >= RATE_GLOBAL_PER_MINUTE) {
+    return { error: 'too_busy', message: 'いま黒板が混んでます。少し待ってね' };
+  }
+
+  // 全体で1時間30投稿
+  const hourKey = 'rate:g:h:' + Math.floor(now / 3600000);
+  const hourCount = parseInt(cache.get(hourKey) || '0', 10);
+  if (hourCount >= RATE_GLOBAL_PER_HOUR) {
+    return { error: 'too_busy', message: 'きょうの黒板はもう静かにしてあげましょう' };
+  }
+
+  // 同じ本文を6時間以内に2度書こうとしたら拒否
+  const bodyHash = sha256hex(body);
+  const dedupKey = 'dedup:b:' + bodyHash;
+  if (cache.get(dedupKey)) {
+    return { error: 'duplicate', message: 'おなじ言葉、最近もありました' };
+  }
+
+  // すべて通過 → カウンターを進めて記録
+  cache.put(voterKey, '1', 60);
+  cache.put(minuteKey, String(minuteCount + 1), 65);
+  cache.put(hourKey, String(hourCount + 1), 3700);
+  cache.put(dedupKey, '1', DEDUP_TTL_SECONDS);
+  return null;
+}
+
+function sha256hex(s) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8);
+  return bytes.map(b => {
+    const v = (b < 0 ? b + 256 : b);
+    return (v < 16 ? '0' : '') + v.toString(16);
+  }).join('');
 }
 
 function handleMineList(data) {
