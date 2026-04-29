@@ -383,6 +383,7 @@ footer p{margin:.4rem 0}
 
 <form class="compose" id="compose" autocomplete="off">
   <label for="msg">いま、黒板に置きたいひと言</label>
+  <input type="text" name="url" id="honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none">
   <textarea id="msg" name="msg" placeholder="ひと言だけ。長く書けないようにしてあります。" maxlength="60" rows="2"></textarea>
   <div class="meta">
     <span class="hint">書いたあとも、明日まで考え直せます。</span>
@@ -619,12 +620,17 @@ footer p{margin:.4rem 0}
     cc.textContent = ta.value.length;
     placeBtn.disabled = ta.value.trim().length === 0;
   });
+  const honey = document.getElementById('honey');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const body = ta.value.trim();
     if (!body) return;
     placeBtn.disabled = true;
-    const result = await api('place', { body, voterId: getVoterId() });
+    const result = await api('place', {
+      body,
+      voterId: getVoterId(),
+      honey: honey.value,
+    });
     if (result.id) {
       const pending = getPending();
       pending.push({ id: result.id, editToken: result.editToken, publishAt: result.publishAt });
@@ -633,7 +639,9 @@ footer p{margin:.4rem 0}
       renderYours();
     } else {
       placeBtn.disabled = false;
-      alert('うまく置けませんでした。少し時間を置いてもう一度。');
+      // サーバが優しいメッセージをくれたらそれを表示
+      const msg = (result && result.message) || 'うまく置けませんでした。少し時間を置いてもう一度。';
+      alert(msg);
     }
   });
 
