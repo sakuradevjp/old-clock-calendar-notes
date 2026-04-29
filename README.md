@@ -11,4 +11,4 @@ The application source lives in a separate private repo: `sakuradevjp/old-clock-
 - 🇯🇵 Japanese (primary): `ja/index.html` and root `/`
 - 🇬🇧 English (secondary): `en/index.html`
 
-The Japanese page is at the root because the target audience is overwhelmingly Japanese (昭和世代 nostalgia, Japanese holidays).
+The Japanese page is at the root because the target audience is overwhelmingly Japanese (classroom nostalgia, Japanese holidays).
