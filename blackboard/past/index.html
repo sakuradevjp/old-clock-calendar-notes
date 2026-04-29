@@ -102,6 +102,13 @@ header.intro .lead{
   padding:1.5rem 0;
   font-size:.95rem;
 }
+.nod-receipt{
+  font-size:.85rem;
+  color:var(--tape);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+  letter-spacing:.05em;
+  margin-top:.3rem;
+}
 
 .months{
   list-style:none;padding:0;margin:0;
@@ -296,6 +303,11 @@ footer a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
           '<p class="body">' + escapeHtml(p.body) + '</p>' +
           '<div class="when">' + (isNaN(d) ? '' : d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日') + '</div>';
         if (withWithdraw) {
+          // 自分の投稿には、誰かが静かにうなずいてくれた数をそっと添える
+          const nods = Number(p.nods) || 0;
+          if (nods > 0) {
+            html += '<div class="nod-receipt">そっとうなずいてくれた人 ' + nods + '</div>';
+          }
           html += '<div class="yours-actions" style="margin-top:.5rem">' +
                     '<button type="button" class="yours-withdraw">そっと下げる</button>' +
                   '</div>';
