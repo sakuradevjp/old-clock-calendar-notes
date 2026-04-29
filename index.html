@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Old Clock Calendar — 昭和の黒板を、デスクトップに。</title>
+<meta name="description" content="昭和の小学校の教室の黒板をモチーフにした、Windows向けデスクトップ時計＆カレンダー。アナログ時計、和暦表示、祝日、写真ピン留め。sakuradev作品紹介。">
+<meta property="og:title" content="Old Clock Calendar — 昭和の黒板を、デスクトップに。">
+<meta property="og:description" content="昭和の小学校の教室の黒板をモチーフにした、Windows向けデスクトップ時計＆カレンダー。">
+<meta property="og:image" content="assets/hero.png">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://sakuradevjp.github.io/old-clock-calendar-notes/">
+<style>
+:root{
+  --board:#1f4e4a;
+  --board-dark:#163a37;
+  --chalk:#f5f1e8;
+  --chalk-soft:#cbc6b8;
+  --chalk-red:#ff7878;
+  --tape:#e8d88f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Hiragino Mincho ProN","Yu Mincho","游明朝","ヒラギノ明朝 ProN W3",serif;
+  background:var(--board);
+  color:var(--chalk);
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(255,255,255,.04), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(255,255,255,.03), transparent 50%);
+}
+.wrap{max-width:880px;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+.crumb{text-align:left;font-size:.9rem;color:var(--chalk-soft);margin-bottom:1rem}
+.crumb a{color:var(--chalk-soft);text-decoration:none;border-bottom:1px dashed var(--chalk-soft)}
+.crumb a:hover{color:var(--chalk)}
+header.hero{text-align:center;padding:1.5rem 0 1.5rem}
+header.hero h1{
+  font-size:clamp(1.8rem,5.5vw,3rem);
+  margin:0 0 1rem;
+  letter-spacing:.05em;
+  color:var(--chalk);
+  text-shadow:0 0 1px rgba(255,255,255,.1);
+}
+header.hero .tagline{
+  font-size:1.1rem;
+  color:var(--chalk-soft);
+  margin:0 0 1.5rem;
+  letter-spacing:.04em;
+}
+header.hero .tagline strong{color:var(--chalk-red);font-weight:normal}
+.badge{
+  display:inline-block;
+  font-size:.8rem;
+  background:rgba(255,255,255,.1);
+  color:var(--chalk-soft);
+  padding:.2rem .7rem;
+  border-radius:99px;
+  border:1px dashed var(--chalk-soft);
+  letter-spacing:.1em;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.hero-media{
+  margin:2rem 0;
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 12px 40px rgba(0,0,0,.4);
+  background:var(--board-dark);
+  aspect-ratio:16/9;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.hero-media img{display:block;width:100%;height:auto}
+.hero-media .placeholder{
+  color:var(--chalk-soft);
+  font-size:.95rem;
+  text-align:center;
+  padding:2rem;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.hero-media .placeholder::before{content:"📸 ";font-size:1.5rem;display:block;margin-bottom:.5rem}
+h2{
+  font-size:1.5rem;
+  margin:3rem 0 1rem;
+  color:var(--chalk);
+  border-bottom:2px dashed var(--chalk-soft);
+  padding-bottom:.5rem;
+  letter-spacing:.05em;
+}
+p{margin:.85rem 0}
+a{color:var(--tape);text-decoration:none;border-bottom:1px solid var(--tape)}
+a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
+ul{padding-left:1.5rem;list-style:"・ "}
+li{margin:.5rem 0}
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:1rem;
+  margin:1.5rem 0;
+}
+.feature{
+  background:rgba(0,0,0,.18);
+  border:1px dashed var(--chalk-soft);
+  border-radius:4px;
+  padding:1.25rem;
+}
+.feature .icon{font-size:1.5rem;display:block;margin-bottom:.4rem}
+.feature strong{display:block;margin-bottom:.4rem;color:var(--chalk);letter-spacing:.04em}
+.feature p{margin:0;color:var(--chalk-soft);font-size:.95rem;font-family:"Yu Gothic","游ゴシック",sans-serif;line-height:1.7}
+.story{
+  background:rgba(0,0,0,.15);
+  border-left:3px solid var(--chalk-red);
+  padding:1.25rem 1.5rem;
+  margin:1.5rem 0;
+  border-radius:0 4px 4px 0;
+}
+.story p{margin:.5rem 0}
+.story p:first-child{margin-top:0}
+.story p:last-child{margin-bottom:0}
+.tech{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  margin:1rem 0;
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.tech span{
+  display:inline-block;
+  background:rgba(0,0,0,.2);
+  border:1px solid var(--chalk-soft);
+  padding:.3rem .8rem;
+  border-radius:3px;
+  font-size:.85rem;
+  color:var(--chalk-soft);
+}
+hr{border:none;border-top:1px dashed var(--chalk-soft);margin:3rem 0;opacity:.4}
+footer{
+  text-align:center;
+  color:var(--chalk-soft);
+  font-size:.85rem;
+  margin-top:3rem;
+  padding-top:2rem;
+  border-top:1px dashed var(--chalk-soft);
+  font-family:"Yu Gothic","游ゴシック",sans-serif;
+}
+.note-soft{color:var(--chalk-soft);font-size:.9rem}
+@media (max-width:600px){
+  .wrap{padding:1.5rem 1rem 3rem}
+  body{line-height:1.75}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="crumb">← <a href="https://sakuradevjp.github.io/">sakuradev</a> ／ Old Clock Calendar</nav>
+
+<header class="hero">
+  <span class="badge">作品紹介 / 個人開発</span>
+  <h1 style="margin-top:1rem">昭和の黒板を、<br>デスクトップに。</h1>
+  <p class="tagline"><strong>Old Clock Calendar</strong><br>教室の片隅にあった、あの時計とカレンダー。</p>
+  <div class="hero-media">
+    <img src="assets/hero.png" alt="Old Clock Calendarのスクリーンショット" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div class="placeholder" style="display:none">スクリーンショット準備中</div>
+  </div>
+</header>
+
+<h2>これは何？</h2>
+<div class="story">
+  <p>昭和の小学校の教室の、あの黒板を覚えていますか。</p>
+  <p>ティールグリーンの板に、白いチョークで日付と時間。赤チョークで日曜と祝日。マスキングテープで貼られた紙のカレンダー。掲示板の隅っこには遠足の写真。</p>
+  <p><strong>Old Clock Calendar</strong> は、その風景をそのままデスクトップに再現する、Windows向けの常駐ウィジェットです。<br>使うたびに、ちょっとだけ昭和の教室に戻れます。</p>
+</div>
+
+<h2>主な機能</h2>
+<div class="feature-grid">
+  <div class="feature">
+    <span class="icon">🕰</span>
+    <strong>アナログ時計</strong>
+    <p>TOKIO QUARTZ 風の壁掛け時計。秒針までしっかり動きます。</p>
+  </div>
+  <div class="feature">
+    <span class="icon">📅</span>
+    <strong>和暦カレンダー</strong>
+    <p>マスキングテープで貼った風の紙カレンダー。日本の祝日を赤で自動表示。</p>
+  </div>
+  <div class="feature">
+    <span class="icon">📝</span>
+    <strong>今日の予定</strong>
+    <p>朝の会の黒板のように、その日の予定を箇条書きでメモ。</p>
+  </div>
+  <div class="feature">
+    <span class="icon">🖼</span>
+    <strong>写真ピン留め</strong>
+    <p>家族の写真や思い出のスナップを、黒板にドラッグ＆ドロップで貼り付け。</p>
+  </div>
+  <div class="feature">
+    <span class="icon">📜</span>
+    <strong>縦書きの日付</strong>
+    <p>「2026年4月29日 水曜日（昭和の日）」を縦書きで一気に表示。</p>
+  </div>
+  <div class="feature">
+    <span class="icon">🪟</span>
+    <strong>軽量＆常駐</strong>
+    <p>Tauri 2製でメモリ使用量わずか。起動時自動実行にも対応。</p>
+  </div>
+</div>
+
+<h2>つくった動機</h2>
+<p>Windows のデスクトップガジェットは 2012 年に廃止されて以来、OS 標準にはありません。Rainmeter はあるけど、設定して、スキン探して、…とちょっと敷居が高い。</p>
+<p>「<strong>インストールしたら即、あの懐かしい雰囲気</strong>」を味わえるものを作りたかった。<br>派手な機能はないけれど、デスクトップの片隅にいるだけで、ちょっと部屋の温度が変わる。そんな道具を目指しました。</p>
+
+<h2>使った技術</h2>
+<div class="tech">
+  <span>Tauri 2</span>
+  <span>Rust</span>
+  <span>HTML / CSS / Vanilla JS</span>
+  <span>WebView2</span>
+</div>
+<p class="note-soft">Electron ではなく Tauri を選んだのは、メモリ消費を抑えて「一日中つけっぱなしにできる」ことを優先したかったから。常駐ツールとしての軽さは譲れないポイントでした。</p>
+
+<hr>
+
+<p style="text-align:center;font-size:1.05rem;margin:2rem 0">
+  あの教室の風景を、もう一度。
+</p>
+
+<footer>
+  <p>Made by <a href="https://sakuradevjp.github.io/">sakuradev</a> · 2026</p>
+  <p>個人開発の作品です。</p>
+</footer>
+
+</div>
+</body>
+</html>

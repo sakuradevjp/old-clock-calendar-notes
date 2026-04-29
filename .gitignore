@@ -1,0 +1,7 @@
+# Claude Code: keep local-only
+CLAUDE.md
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
