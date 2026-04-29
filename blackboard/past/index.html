@@ -38,8 +38,10 @@ body{
   margin-bottom:2rem;
   font-family:"Yu Gothic","游ゴシック",sans-serif;
 }
-.crumb a{color:var(--chalk-soft);text-decoration:none;border-bottom:1px dashed var(--chalk-soft)}
-.crumb a:hover{color:var(--chalk)}
+a, a:visited{color:var(--tape);text-decoration:none;border-bottom:1px solid var(--tape)}
+a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
+.crumb a, .crumb a:visited{color:var(--chalk-soft);border-bottom:1px dashed var(--chalk-soft)}
+.crumb a:hover{color:var(--chalk);border-bottom-color:var(--chalk)}
 
 header.intro{text-align:center;padding:1rem 0 2.5rem}
 header.intro h1{
@@ -96,8 +98,7 @@ header.intro .lead{
 
 .empty-msg{
   text-align:center;
-  color:var(--chalk-faint);
-  font-style:italic;
+  color:var(--chalk-soft);
   padding:1.5rem 0;
   font-size:.95rem;
 }
