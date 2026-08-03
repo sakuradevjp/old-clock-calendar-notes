@@ -2,7 +2,9 @@ name: Blackboard tick
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # 5分ごと
+    # 毎日 21:05 UTC = 06:05 JST。
+    # 置かれたひと言は「翌朝6時」に公開する決まりなので、1日1回の朝で足りる。
+    - cron: '5 21 * * *'
   workflow_dispatch:        # 手動でも回せる
 
 permissions:
